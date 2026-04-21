@@ -3,7 +3,7 @@
 
 CryptoWatch is a real-time cryptocurrency dashboard that demonstrates how to build a modern, interactive web app using only HTML, CSS, and JavaScript. It connects directly to the Binance WebSocket API to display live prices, charts, and market data for major coins—no backend or database required.
 
-![CryptoWatch Demo Screenshot](demo-screenshot.png)
+![CryptoWatch Demo Screenshot](image.png)
 
 **Try it yourself:**
 Just clone the repository and open `index.html` in your browser. No build step, no dependencies!
@@ -50,8 +50,8 @@ You can publish this project on GitHub Pages, Vercel, Netlify, or any static hos
 
 ## Notes
 
-* No backend or database is used.
-* All data is fetched in real-time via WebSocket directly in the browser.
+- No backend or database is used.
+- All data is fetched in real-time via WebSocket directly in the browser.
 
 ---
 
