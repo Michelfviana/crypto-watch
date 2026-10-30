@@ -1,37 +1,37 @@
-# Contrato dos dados
+# Data contract
 
-Fontes consultadas em 30/10/2026:
+Sources consulted on October 30, 2026:
 
-- [Binance: URLs exclusivas para dados públicos](https://github.com/binance/binance-spot-api-docs/blob/master/faqs/market_data_only.md).
-- [Binance: API REST Spot](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md).
-- [Binance: streams WebSocket](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md).
+- [Binance: public market data URLs](https://github.com/binance/binance-spot-api-docs/blob/master/faqs/market_data_only.md).
+- [Binance: Spot REST API](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md).
+- [Binance: WebSocket streams](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md).
 
-A implementação usa `https://data-api.binance.vision/api/v3` e `wss://data-stream.binance.vision:443/stream`. São fontes de dados públicos sem autenticação. Nenhum endpoint de conta ou negociação é utilizado.
+The implementation uses `https://data-api.binance.vision/api/v3` and `wss://data-stream.binance.vision:443/stream`. These provide public market data without authentication. No account or trading endpoints are used.
 
-| Operação | Parâmetros | Campos utilizados |
+| Operation | Parameters | Consumed fields |
 | --- | --- | --- |
-| `GET /ticker/24hr` | `symbols`: array JSON codificado na query | `symbol`, `lastPrice`, `priceChangePercent`, `quoteVolume`, `highPrice`, `lowPrice`, `priceChange` |
+| `GET /ticker/24hr` | `symbols`: a JSON array encoded in the query | `symbol`, `lastPrice`, `priceChangePercent`, `quoteVolume`, `highPrice`, `lowPrice`, `priceChange` |
 | `GET /ticker/price` | `symbol=USDTBRL` | `price` |
-| `GET /depth` | `symbol=BTCUSDT`, `limit=5` | `asks` e `bids`: pares `[preço, quantidade]` |
-| `GET /klines` | `symbol`, `interval`, `limit` | timestamp de abertura no índice 0 e fechamento no índice 4 |
-| Stream combinado `@ticker` | símbolos em minúsculas separados por `/` | objeto `data`: `s`, `c`, `P`, `q`, `h`, `l`, `p` |
+| `GET /depth` | `symbol=BTCUSDT`, `limit=5` | `asks` and `bids`: `[price, quantity]` pairs |
+| `GET /klines` | `symbol`, `interval`, `limit` | Opening timestamp at index 0 and closing price at index 4 |
+| Combined `@ticker` stream | Lowercase symbols separated by `/` | `data` object: `s`, `c`, `P`, `q`, `h`, `l`, `p` |
 
-O histórico usa 24 barras de 1h, 42 barras de 4h ou 30 barras de 1d. A última barra pode ainda estar aberta. A interface mostra fechamentos em USDT e datas no fuso do navegador. Os minigráficos são amostras da sessão e não têm espaçamento temporal fixo.
+History uses 24 hourly bars, 42 four-hour bars, or 30 daily bars. The last bar may still be open. The interface shows closing prices in USDT and dates in the browser's time zone, with US English formatting. Sparklines are session samples without fixed time intervals.
 
-## Falhas e concorrência
+## Failures and concurrency
 
-- Cada requisição tem timeout de 10 segundos e valida os campos utilizados antes de atualizar o estado.
-- HTTP não exitoso e JSON inválido são tratados como falha; não geram dados fictícios.
-- HTTP 429/418 bloqueia novas chamadas REST até o prazo de `Retry-After` em segundos, ou 60 segundos quando ausente.
-- Há no máximo uma consulta simultânea por rotina de snapshot, câmbio ou livro de ofertas.
-- Respostas antigas de histórico são canceladas e ignoradas por identificador de requisição. Cache por moeda/período de até 60 segundos.
-- Uma resposta REST não substitui uma cotação que já está sendo atualizada por um stream ativo.
-- Cada reconexão encerra a conexão anterior e ignora eventos dela. A espera cresce até 30 segundos, com pequena variação aleatória apenas no tempo de reconexão.
-- Ao perder internet, o selo de dados ao vivo é retirado. Ao voltar, conexão e snapshots são retomados.
-- O livro de ofertas é um snapshot periódico, não uma reconstrução incremental em tempo real.
+- Each request has a 10-second timeout and validates the consumed fields before updating state.
+- Unsuccessful HTTP responses and invalid JSON are treated as failures; they do not produce fabricated data.
+- HTTP 429/418 blocks further REST requests until the `Retry-After` delay in seconds expires, or for 60 seconds when the header is missing.
+- At most one snapshot, exchange-rate, or order-book request can run concurrently within each routine.
+- Older history requests are canceled and ignored using request identifiers. History is cached by coin and time range for up to 60 seconds.
+- A REST response does not replace a price already being updated by an active stream.
+- Each reconnection closes the previous connection and ignores its events. The delay grows to 30 seconds, with a small random offset applied only to reconnection timing.
+- Losing internet access removes the live connection state. Connection and snapshot updates resume when access returns.
+- The order book is a periodic snapshot, not an incremental real-time reconstruction.
 
-## Evidência e limites
+## Evidence and limitations
 
-O catálogo Orbit confirmou os contratos de preço, klines e ofertas. Seu resultado não cobriu o ticker de 24 horas; esse contrato foi conferido na documentação oficial da Binance. Não foi necessário fornecer credenciais.
+The Orbit catalog confirmed the price, kline, and order-book contracts. Its results did not cover the 24-hour ticker; that contract was checked against Binance's official documentation. No credentials were required.
 
-Os testes automatizados usam um servidor HTTP local e fixtures baseadas nesses formatos. Exercitam o cliente e os estados de interface reais; o transporte WebSocket é controlado pelo teste. Também foram realizadas consultas HTTP de leitura aos quatro endpoints públicos reais: ticker de 24 horas com array JSON compacto, cotação USDT/BRL, ofertas BTCUSDT e klines. Todos responderam HTTP 200 com os campos esperados. Isso não valida a acessibilidade regional, a política CORS no navegador ou a disponibilidade contínua dos serviços externos. O executável `postman` disponível neste ambiente corresponde ao aplicativo desktop, sem os comandos CLI de simulation; a verificação reproduzível utiliza Node.js e Chromium.
+Automated checks use a local HTTP server and fixtures based on these formats. They exercise the actual client and interface states; WebSocket transport is controlled by the checks. Read-only HTTP requests were also made to all four real public endpoints: the 24-hour ticker with a compact JSON symbol array, the USDT/BRL price, BTCUSDT order book, and klines. All returned HTTP 200 with the expected fields. This does not establish regional accessibility, browser CORS support, or continuous availability of external services. The `postman` executable in the development environment was the desktop app without the simulation CLI commands; reproducible verification uses Node.js and Chromium.

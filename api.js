@@ -5,7 +5,7 @@ const CryptoAPI = (() => {
   let blockedUntil = 0;
 
   async function request(path, params = {}, signal) {
-    if (Date.now() < blockedUntil) throw new Error('Limite da API atingido. Aguarde antes de tentar novamente.');
+    if (Date.now() < blockedUntil) throw new Error('API rate limit reached. Please wait before retrying.');
     const controller = new AbortController();
     const abort = () => controller.abort();
     if (signal?.aborted) abort();
@@ -17,7 +17,7 @@ const CryptoAPI = (() => {
         const retry = Number(response.headers.get('Retry-After'));
         blockedUntil = Date.now() + (retry > 0 ? retry * 1000 : 60000);
       }
-      if (!response.ok) throw new Error(`Serviço indisponível (HTTP ${response.status}).`);
+      if (!response.ok) throw new Error(`Service unavailable (HTTP ${response.status}).`);
       return await response.json();
     } finally {
       clearTimeout(timer);
@@ -34,31 +34,31 @@ const CryptoAPI = (() => {
       vol: Number(raw.quoteVolume), high: Number(raw.highPrice), low: Number(raw.lowPrice), change: Number(raw.priceChange),
     };
     if (typeof data.symbol !== 'string' || !Object.entries(data).every(([key, value]) => key === 'symbol' || Number.isFinite(value)) || data.price <= 0 || data.vol < 0 || data.low <= 0 || data.high < data.low) {
-      throw new Error('Dados de mercado inválidos.');
+      throw new Error('Invalid market data.');
     }
     return data;
   }
 
   async function tickers(symbols) {
     const raw = await request('ticker/24hr', { symbols: JSON.stringify(symbols) });
-    if (!Array.isArray(raw) || !raw.length) throw new Error('Cotações indisponíveis.');
+    if (!Array.isArray(raw) || !raw.length) throw new Error('Prices are unavailable.');
     return raw.map(item => ticker(item));
   }
   async function rate() {
     const raw = await request('ticker/price', { symbol: 'USDTBRL' });
     const value = Number(raw.price);
-    if (!Number.isFinite(value) || value <= 0) throw new Error('Câmbio indisponível.');
+    if (!Number.isFinite(value) || value <= 0) throw new Error('Exchange rate is unavailable.');
     return value;
   }
   async function klines(symbol, interval, limit, signal) {
     const raw = await request('klines', { symbol, interval, limit }, signal);
-    if (!Array.isArray(raw) || !raw.length || raw.some(k => !Array.isArray(k) || !Number.isFinite(Number(k[0])) || !Number.isFinite(Number(k[4])) || Number(k[4]) <= 0)) throw new Error('Histórico indisponível.');
+    if (!Array.isArray(raw) || !raw.length || raw.some(k => !Array.isArray(k) || !Number.isFinite(Number(k[0])) || !Number.isFinite(Number(k[4])) || Number(k[4]) <= 0)) throw new Error('History is unavailable.');
     return raw.map(k => ({ time: Number(k[0]), close: Number(k[4]) }));
   }
   async function depth() {
     const raw = await request('depth', { symbol: 'BTCUSDT', limit: 5 });
     const valid = rows => Array.isArray(rows) && rows.length > 0 && rows.every(row => Array.isArray(row) && Number.isFinite(Number(row[0])) && Number(row[0]) > 0 && Number.isFinite(Number(row[1])) && Number(row[1]) >= 0);
-    if (!valid(raw.asks) || !valid(raw.bids)) throw new Error('Livro de ofertas indisponível.');
+    if (!valid(raw.asks) || !valid(raw.bids)) throw new Error('Order book is unavailable.');
     return { asks: raw.asks.map(([p, v]) => ({ p: Number(p), v: Number(v) })), bids: raw.bids.map(([p, v]) => ({ p: Number(p), v: Number(v) })) };
   }
   return { request, ticker, tickers, rate, klines, depth, streamURL: symbols => `${STREAM}?streams=${symbols.map(s => s.toLowerCase() + '@ticker').join('/')}` };

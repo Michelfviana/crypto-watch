@@ -14,7 +14,7 @@ const ticker = { symbol: 'BTCUSDT', lastPrice: '68000', priceChangePercent: '2.5
 test('normalizes market data and rejects invalid prices', () => {
   const api = load();
   assert.equal(api.ticker(ticker).price, 68000);
-  for (const price of ['bad', 'Infinity', '0', '-1']) assert.throws(() => api.ticker({ ...ticker, lastPrice: price }), /inválidos/);
+  for (const price of ['bad', 'Infinity', '0', '-1']) assert.throws(() => api.ticker({ ...ticker, lastPrice: price }), /Invalid/);
 });
 
 test('uses encoded symbols and validates all upstream schemas', async () => {
@@ -24,13 +24,13 @@ test('uses encoded symbols and validates all upstream schemas', async () => {
   assert.equal((await api.tickers(['BTCUSDT']))[0].vol, 1000000);
   assert.equal(calls[0].searchParams.get('symbols'), '["BTCUSDT"]');
   body = { code: -1121, msg: 'Invalid symbol' };
-  await assert.rejects(api.tickers(['BTCUSDT']), /indisponíveis/);
+  await assert.rejects(api.tickers(['BTCUSDT']), /unavailable/);
   body = { price: 'NaN' };
-  await assert.rejects(api.rate(), /indisponível/);
+  await assert.rejects(api.rate(), /unavailable/);
   body = [];
-  await assert.rejects(api.klines('BTCUSDT', '1h', 24), /indisponível/);
+  await assert.rejects(api.klines('BTCUSDT', '1h', 24), /unavailable/);
   body = { asks: [['1', 'NaN']], bids: [['1', '2']] };
-  await assert.rejects(api.depth(), /indisponível/);
+  await assert.rejects(api.depth(), /unavailable/);
   body = { asks: [['68001', '1.2']], bids: [['68000', '2.4']] };
   assert.equal((await api.depth()).asks[0].v, 1.2);
 });
@@ -39,7 +39,7 @@ test('HTTP failures and rate limits do not silently produce prices', async () =>
   let count = 0;
   const api = load(async () => { count++; return new Response('{}', { status: 429, headers: { 'Retry-After': '60' } }); });
   await assert.rejects(api.rate(), /HTTP 429/);
-  await assert.rejects(api.rate(), /Limite/);
+  await assert.rejects(api.rate(), /rate limit/);
   assert.equal(count, 1);
   await assert.rejects(load(async () => new Response('<html>unavailable</html>', { status: 503 })).rate(), /HTTP 503/);
 });

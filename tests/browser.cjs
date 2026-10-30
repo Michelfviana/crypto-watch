@@ -85,7 +85,7 @@ const server = http.createServer((req, res) => {
     await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
     const origin = `http://127.0.0.1:${server.address().port}`;
     await cdp('Page.navigate', { url: origin });
-    await wait('document.querySelectorAll("#tableBody tr[data-sym]").length === 10 && document.getElementById("brlRate").textContent.includes("5,25")');
+    await wait('document.querySelectorAll("#tableBody tr[data-sym]").length === 10 && document.getElementById("brlRate").textContent.includes("5.25")');
     assert.equal(await evaluate('typeof Chart'), 'function');
     assert.equal(await evaluate('document.querySelector("#wsPill").classList.contains("connected")'), false, 'opening the socket alone does not indicate live data');
     await evaluate('testSockets.at(-1).emit("BTCUSDT", 68123, 12, 22000000)');
@@ -116,7 +116,7 @@ const server = http.createServer((req, res) => {
     await evaluate('closeModal()');
     failHistory = true;
     await evaluate('historyCache.clear(); openModal("ETHUSDT")');
-    await wait('document.querySelector("#chartStatus").textContent.includes("indisponível")');
+    await wait('document.querySelector("#chartStatus").textContent.includes("unavailable")');
     await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
     await wait('!document.querySelector("#modalOverlay").open');
     failRate = true;
@@ -124,7 +124,7 @@ const server = http.createServer((req, res) => {
     assert.equal(await evaluate('document.querySelector("#tableBody .ptd").textContent'), '—', 'failed conversion cannot use a fictitious rate');
     await evaluate('window.dispatchEvent(new Event("offline"))');
     assert.equal(await evaluate('document.querySelector("#wsPill").classList.contains("connected")'), false);
-    assert.equal(await evaluate('document.querySelector("#wsLabel").textContent'), 'Sem conexão');
+    assert.equal(await evaluate('document.querySelector("#wsLabel").textContent'), 'Offline');
     await evaluate('window.dispatchEvent(new Event("online"))');
     await wait('testSockets.length > 1');
     assert.equal(await evaluate('testSockets.at(-2).readyState'), 3);
@@ -149,7 +149,7 @@ const server = http.createServer((req, res) => {
     await wait('document.querySelector("#breadthNum").textContent === "0%"');
     await evaluate('testSockets.at(-1).emit("BTCUSDT", 101, 0.5)');
     await wait('document.querySelector("#breadthNum").textContent === "10%"');
-    assert.equal(await evaluate('document.querySelector("#breadthLbl").textContent'), '1 de 10 em alta');
+    assert.equal(await evaluate('document.querySelector("#breadthLbl").textContent'), '1 of 10 gaining');
     await evaluate('testSockets.at(-1).emit("BTCUSDT", 102, 0.8)');
     await wait('document.querySelector("#tableBody tr[data-sym=BTCUSDT] .ptd").textContent.includes("102")');
     assert.equal(await evaluate('document.querySelector("#breadthNum").textContent'), '10%', 'higher price with the same sign keeps breadth unchanged');
@@ -158,14 +158,14 @@ const server = http.createServer((req, res) => {
     assert.equal(await evaluate('document.querySelector("#breadthProgress").getAttribute("aria-valuenow")'), '20');
     await evaluate('testSockets.at(-1).emit("ETHUSDT", 100, 0)');
     await wait('document.querySelector("#breadthNum").textContent === "10%"');
-    assert.equal(await evaluate('document.querySelector("#breadthSummary").textContent'), '8 em baixa · 1 sem variação');
-    assert.equal(await evaluate('document.querySelector("#breadthStatus").textContent.includes("Último dado às")'), true);
+    assert.equal(await evaluate('document.querySelector("#breadthSummary").textContent'), '8 declining · 1 unchanged');
+    assert.equal(await evaluate('document.querySelector("#breadthStatus").textContent.includes("Last data at")'), true);
     await evaluate('window.dispatchEvent(new Event("offline"))');
-    assert.equal(await evaluate('document.querySelector("#breadthStatus").textContent.includes("Sem atualização ao vivo")'), true);
+    assert.equal(await evaluate('document.querySelector("#breadthStatus").textContent.includes("Live updates unavailable")'), true);
     failMarket = true;
     await evaluate('localStorage.clear()');
     await cdp('Page.reload');
-    await wait('document.querySelector("#notice").textContent.includes("indisponíveis")');
+    await wait('document.querySelector("#notice").textContent.includes("unavailable")');
     assert.equal(await evaluate('document.querySelector("#wsPill").classList.contains("connected")'), false);
     assert.equal(exceptions.length, 0, JSON.stringify(exceptions));
     for (const endpoint of ['/ticker/24hr', '/ticker/price', '/depth', '/klines']) assert.ok(requests.some(r => r.endsWith(endpoint)), endpoint + ' exercised over HTTP');

@@ -1,30 +1,30 @@
 # CryptoWatch
 
-Dashboard de criptomoedas feito com HTML, CSS e JavaScript, sem framework, backend ou etapa de build.
+A cryptocurrency dashboard built with HTML, CSS, and JavaScript. No framework, backend, or build step required.
 
 **Demo:** [michelfviana.github.io/crypto-watch](https://michelfviana.github.io/crypto-watch/)
 
 ![CryptoWatch](image.png)
 
-> A imagem acima é da versão original. A publicação da demo depende do fluxo de deploy do repositório.
+> The screenshot shows the original version. The live demo is updated through the repository's deployment workflow.
 
-## Funcionalidades
+## Features
 
-- Cotações e estatísticas de 24 horas de dez moedas via WebSocket da Binance.
-- Preços em USDT e conversão em BRL pelo par USDT/BRL.
-- Busca, ordenação, filtros de altas/baixas e favoritos persistidos neste navegador.
-- Minigráficos com as últimas 16 atualizações reais recebidas na sessão.
-- Histórico de fechamentos em 1, 7 e 30 dias, com cache curto e cancelamento ao trocar o período.
-- Livro de ofertas BTC/USDT com cinco níveis e snapshot atualizado a cada 15 segundos enquanto a página está visível.
-- Mapa de calor, volumes e percentual de moedas acompanhadas com variação positiva.
-- Conversor de quantidades, layout para celular e controles acessíveis por teclado.
-- Reconexão progressiva, indicação de desconexão/dados parados, botão de reconexão e tratamento de falhas HTTP e limites da API.
+- Live prices and 24-hour statistics for ten coins through Binance WebSocket streams.
+- Prices in USDT and BRL conversion using the USDT/BRL pair.
+- Search, sorting, gainers/losers filters, and favorites saved in your browser.
+- Sparklines showing the latest 16 real price updates received during the session.
+- Closing-price history for 1, 7, and 30 days, with short-lived caching and cancellation when switching time ranges.
+- A five-level BTC/USDT order book snapshot refreshed every 15 seconds while the page is visible.
+- A heatmap, trading volumes, and the percentage of tracked coins with positive 24-hour changes.
+- A quantity converter, responsive layout, and keyboard-accessible controls.
+- Progressive reconnection, offline and stale-data indicators, a reconnect button, and HTTP error and rate-limit handling.
 
-Não há valores de mercado gerados aleatoriamente. O antigo Fear & Greed simulado foi substituído por **Moedas em alta**, calculado a partir das cotações acompanhadas. Esse indicador não é um índice de sentimento do mercado inteiro. Com as dez moedas recebidas, ele varia em passos de 10 pontos percentuais quando uma moeda cruza 0% na variação de 24 horas; preços podem mudar sem alterar o percentual. O card mostra o horário do último dado recebido e avisa quando perde a atualização ao vivo. As barras de tendência representam preços recebidos nesta sessão, não candles OHLC.
+Market values are never randomly generated. The previous simulated Fear & Greed widget has been replaced with **Coins gaining**, calculated from the tracked prices. It is not a market-wide sentiment index. With all ten coins loaded, it changes in steps of 10 percentage points when a coin crosses 0% in its 24-hour change; prices can move without changing this percentage. The card shows when the latest data arrived and warns when live updates are unavailable. Trend bars represent session price samples, not OHLC candles.
 
-## Executar
+## Run locally
 
-Clone o repositório e sirva os arquivos com qualquer servidor estático:
+Clone the repository and serve the files with any static HTTP server:
 
 ```bash
 git clone https://github.com/Michelfviana/crypto-watch.git
@@ -32,53 +32,53 @@ cd crypto-watch
 python3 -m http.server 8080
 ```
 
-Abra `http://localhost:8080`. Não é necessário instalar pacotes npm para usar o dashboard. A abertura direta de `index.html` também é possível em navegadores que permitem as conexões externas, mas um servidor local oferece um comportamento mais previsível para armazenamento e acesso à rede.
+Open `http://localhost:8080`. You do not need to install npm packages to use the dashboard. Opening `index.html` directly also works in browsers that allow external connections, but a local server provides more predictable storage and network behavior.
 
-O Chart.js 4.4.1 está incluído em `vendor/`, com sua licença MIT. As fontes são carregadas pelo Google Fonts e têm fontes locais de fallback. Se os gráficos não puderem carregar, a tabela e os demais dados continuam disponíveis.
+Chart.js 4.4.1 is included in `vendor/` with its MIT license. Fonts are loaded from Google Fonts, with local fallbacks. If charts cannot load, the price table and other market data remain available.
 
-## Organização
+## Project structure
 
-| Arquivo | Responsabilidade |
+| File | Responsibility |
 | --- | --- |
-| `index.html` | Estrutura, controles e diálogo de detalhes |
-| `style.css` | Tema, responsividade e redução de movimentos |
-| `api.js` | Acesso aos dados, timeout, validação e limites HTTP |
-| `preferences.js` | Preferências locais com recuperação de falhas de armazenamento |
-| `script.js` | Estado, conexão, renderização e interações |
-| `tests/` | Testes de integração HTTP, validação e fluxos no Chromium |
-| `docs/data-contract.md` | Fontes, contratos e limitações dos dados |
+| `index.html` | Page structure, controls, and details dialog |
+| `style.css` | Theme, responsive layouts, and reduced motion |
+| `api.js` | Data access, timeouts, validation, and HTTP rate limits |
+| `preferences.js` | Local preferences and storage failure recovery |
+| `script.js` | State, connection management, rendering, and interactions |
+| `tests/` | HTTP integration, validation, and Chromium interaction checks |
+| `docs/data-contract.md` | Data sources, contracts, and limitations |
 
-## Verificação
+## Verification
 
-Com Node.js 22 ou superior:
+With Node.js 22 or later:
 
 ```bash
 npm run check
 npm test
 ```
 
-Para verificar os fluxos de interface, instale Chromium e execute:
+To check interface flows, install Chromium and run:
 
 ```bash
 npm run test:browser
 ```
 
-Para outro executável compatível, use `CHROME_BIN=/caminho/do/chromium npm run test:browser`.
+To use another compatible executable, set `CHROME_BIN=/path/to/chromium npm run test:browser`.
 
-Os testes de navegador usam o código real do app e o Chart.js incluído, com um servidor HTTP local que representa a API e um WebSocket controlado. Verificam atualizações, rankings, foco, favoritos, moeda persistida, respostas atrasadas, Escape, falhas HTTP, reconexão e telas de 320/390 px. Não dependem da disponibilidade da Binance nem comprovam disponibilidade regional ou CORS da API real. As capturas de verificação ficam no diretório temporário do sistema.
+Browser checks run the actual app and bundled Chart.js against a local HTTP API stand-in and a controlled WebSocket. They cover live updates, rankings, focus, favorites, currency persistence, delayed responses, Escape, HTTP failures, reconnection, market breadth, and 320/390 px screens. They do not depend on Binance availability or establish regional access or CORS support for the real API. Verification screenshots are saved in the system's temporary directory.
 
-## Dados e privacidade
+## Data and privacy
 
-- USDT não é USD. A conversão em reais usa o preço do par USDT/BRL na Binance, sem taxas ou spread de execução.
-- Sem câmbio válido, os valores em BRL ficam indisponíveis. Um snapshot antigo do livro de ofertas é identificado como desatualizado quando a atualização falha.
-- O estado da conexão só passa para “Ao vivo” depois de uma mensagem de mercado válida. Dados parados por mais de 20 segundos acionam a recuperação da conexão.
-- Altas e baixas consideram apenas as dez moedas configuradas em `COINS`, não todo o mercado. Volume é o volume de negociação cotado em USDT.
-- Favoritos e moeda são armazenados apenas no `localStorage`. Se o armazenamento estiver bloqueado, funcionam durante a sessão.
-- Não utiliza chave de API, conta, banco de dados ou endpoints de negociação. O navegador se conecta diretamente à Binance, que recebe os dados usuais da conexão.
-- Acesso à API depende de internet, disponibilidade do provedor e restrições regionais. Consulte [o contrato dos dados](docs/data-contract.md).
+- USDT is not USD. BRL conversion uses Binance's USDT/BRL price without fees or execution spread. The interface uses English labels and US English number/date formatting, including for BRL amounts.
+- Without a valid exchange rate, BRL values are unavailable. An older order book snapshot is marked as outdated if refreshing it fails.
+- The connection status becomes “Live” only after a valid market message arrives. More than 20 seconds without updates triggers connection recovery.
+- Gainers and losers cover only the ten coins configured in `COINS`, not the entire market. Volume is trading volume quoted in USDT.
+- Favorites and the selected currency are saved only in `localStorage`. If storage is blocked, they still work during the session.
+- No API key, account, database, or trading endpoint is used. Your browser connects directly to Binance, which receives standard connection metadata.
+- API access depends on your internet connection, provider availability, and regional restrictions. See the [data contract](docs/data-contract.md).
 
-## Publicação
+## Deployment
 
-Publique `index.html`, `style.css`, `api.js`, `preferences.js`, `script.js` e `vendor/` juntos em um host estático, como o GitHub Pages. Não há build nem credenciais de produção.
+Publish `index.html`, `style.css`, `api.js`, `preferences.js`, `script.js`, and `vendor/` together on a static host such as GitHub Pages. No build step or production credentials are needed.
 
-Projeto educacional de acompanhamento de mercado.
+An educational market-tracking project.

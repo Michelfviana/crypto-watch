@@ -101,7 +101,7 @@ const fmtBRL = (p, r) => {
   if (v >= 1000)
     return (
       "R$" +
-      v.toLocaleString("pt-BR", {
+      v.toLocaleString("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })
@@ -173,11 +173,11 @@ async function fetchBRL() {
   try {
     brlRate = await CryptoAPI.rate();
     brlUpdated = Date.now();
-    document.getElementById("brlRate").textContent = "USDT/BRL · R$ " + brlRate.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById("brlRate").textContent = "USDT/BRL · R$ " + brlRate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     renderAll();
     if (currentModal) updateModal(currentModal);
   } catch {
-    document.getElementById("brlRate").textContent = brlUpdated ? "USDT/BRL · desatualizado" : "USDT/BRL indisponível";
+    document.getElementById("brlRate").textContent = brlUpdated ? "USDT/BRL · outdated" : "USDT/BRL unavailable";
     brlRate = null;
     renderAll();
     if (currentModal) updateModal(currentModal);
@@ -202,8 +202,8 @@ async function fetchInitial() {
     announce("");
   } catch {
     if (!Object.keys(liveData).length) {
-      document.getElementById("tableBody").innerHTML = '<tr><td colspan="7" class="empty-state">Não foi possível carregar as cotações. Verifique sua conexão e tente novamente.</td></tr>';
-      announce("Cotações indisponíveis. Você pode tentar conectar novamente.");
+      document.getElementById("tableBody").innerHTML = '<tr><td colspan="7" class="empty-state">Unable to load prices. Check your connection and try again.</td></tr>';
+      announce("Prices are unavailable. You can try reconnecting.");
     }
   } finally { initialBusy = false; }
 }
@@ -217,18 +217,18 @@ function scheduleReconnect() {
 
 function connectWS() {
   clearTimeout(wsReconnectTimer);
-  if (stopped || !navigator.onLine) { setWsStatus("offline", "Sem conexão"); return; }
+  if (stopped || !navigator.onLine) { setWsStatus("offline", "Offline"); return; }
   if (ws) { ws.onclose = null; ws.close(); }
-  setWsStatus("connecting", "Conectando...");
+  setWsStatus("connecting", "Connecting...");
   let socket;
   try { socket = new WebSocket(CryptoAPI.streamURL(COINS.map(c => c.s))); }
-  catch { setWsStatus("error", "Conexão indisponível"); scheduleReconnect(); return; }
+  catch { setWsStatus("error", "Connection unavailable"); scheduleReconnect(); return; }
   ws = socket;
   lastMessageTime = Date.now();
   socket.onopen = () => {
     if (ws !== socket) return;
     lastMessageTime = Date.now();
-    setWsStatus("connecting", "Aguardando dados...");
+    setWsStatus("connecting", "Waiting for data...");
   };
   socket.onmessage = e => {
     if (ws !== socket || stopped) return;
@@ -237,21 +237,21 @@ function connectWS() {
       if (!getCoin(d.symbol)) return;
       lastMessageTime = Date.now();
       reconnectAttempt = 0;
-      setWsStatus("live", "Ao vivo");
+      setWsStatus("live", "Live");
       announce("");
       liveData[d.symbol] = d;
       marketUpdatedAt = Date.now();
       mini[d.symbol].push(d.price);
       mini[d.symbol] = mini[d.symbol].slice(-16);
       tickCount++;
-      document.getElementById("tickCounter").textContent = `${tickCount} atualizações`;
+      document.getElementById("tickCounter").textContent = `${tickCount} updates`;
       onPriceUpdate(d.symbol);
-    } catch (error) { console.warn("Mensagem de mercado ignorada:", error.message); }
+    } catch (error) { console.warn("Ignored market message:", error.message); }
   };
-  socket.onerror = () => { if (ws === socket) setWsStatus("error", "Erro de conexão"); };
+  socket.onerror = () => { if (ws === socket) setWsStatus("error", "Connection error"); };
   socket.onclose = () => {
     if (ws !== socket || stopped) return;
-    setWsStatus(navigator.onLine ? "reconnecting" : "offline", navigator.onLine ? "Reconectando..." : "Sem conexão");
+    setWsStatus(navigator.onLine ? "reconnecting" : "offline", navigator.onLine ? "Reconnecting..." : "Offline");
     scheduleReconnect();
   };
 }
@@ -265,7 +265,7 @@ function setWsStatus(state, label) {
   document.getElementById("wsStatusDot").className = "ws-dot" + (state === "live" ? " live" : "");
   document.getElementById("wsStatusLabel").textContent = label;
   document.querySelector(".cdot").style.background = state === "live" ? "var(--g)" : "var(--y)";
-  document.getElementById("connTxt").textContent = state === "live" ? "Binance · dados ao vivo" : "Binance · " + label;
+  document.getElementById("connTxt").textContent = state === "live" ? "Binance · live market data" : "Binance · " + label;
   updateMarketBreadth();
 }
 
@@ -293,7 +293,7 @@ function flushUpdates() {
   renderVolBars();
   if (currentModal && syms.includes(currentModal)) updateModal(currentModal);
   document.getElementById("footerTs").textContent =
-    "Atualizado " + new Date().toLocaleTimeString("pt-BR");
+    "Updated " + new Date().toLocaleTimeString("en-US");
 }
 
 // Keep keyboard focus when a changing widget replaces its buttons.
@@ -473,26 +473,26 @@ function updateMarketBreadth() {
   const color = percentage >= 50 ? "var(--g)" : "var(--r)";
   document.getElementById("breadthNum").textContent = values.length ? percentage + "%" : "—";
   document.getElementById("breadthNum").style.color = color;
-  document.getElementById("breadthLbl").textContent = values.length ? `${rising} de ${values.length} em alta` : "Aguardando dados";
+  document.getElementById("breadthLbl").textContent = values.length ? `${rising} of ${values.length} gaining` : "Waiting for data";
   document.getElementById("breadthFill").style.width = percentage + "%";
   document.getElementById("breadthFill").style.background = color;
   const progress = document.getElementById("breadthProgress");
   if (values.length) {
     progress.setAttribute("aria-valuenow", percentage);
-    progress.setAttribute("aria-valuetext", `${rising} de ${values.length} moedas em alta nas últimas 24 horas`);
+    progress.setAttribute("aria-valuetext", `${rising} of ${values.length} coins gaining over the last 24 hours`);
   } else {
     progress.removeAttribute("aria-valuenow");
     progress.removeAttribute("aria-valuetext");
   }
-  document.getElementById("breadthSummary").textContent = values.length ? `${falling} em baixa · ${unchanged} sem variação` : "";
+  document.getElementById("breadthSummary").textContent = values.length ? `${falling} declining · ${unchanged} unchanged` : "";
   const status = document.getElementById("breadthStatus");
   if (!marketUpdatedAt) {
-    status.textContent = connectionState === "offline" ? "Sem conexão · aguardando cotações" : "Aguardando cotações...";
+    status.textContent = connectionState === "offline" ? "Offline · waiting for prices" : "Waiting for prices...";
     return;
   }
   const disconnected = ["offline", "error", "reconnecting", "stale"].includes(connectionState);
-  const time = new Date(marketUpdatedAt).toLocaleTimeString("pt-BR");
-  status.textContent = `${disconnected ? "Sem atualização ao vivo · último dado" : "Último dado"} às ${time}` + (values.length < COINS.length ? ` · ${values.length}/${COINS.length} moedas recebidas` : "");
+  const time = new Date(marketUpdatedAt).toLocaleTimeString("en-US");
+  status.textContent = `${disconnected ? "Live updates unavailable · last data" : "Last data"} at ${time}` + (values.length < COINS.length ? ` · ${values.length}/${COINS.length} coins received` : "");
 }
 
 function updateHeatmap() {
@@ -518,10 +518,10 @@ async function fetchOrderBook() {
   try {
     orderBookData = await CryptoAPI.depth();
     renderOrderBook();
-    document.getElementById("orderBookStatus").textContent = "Snapshot · " + new Date().toLocaleTimeString("pt-BR");
+    document.getElementById("orderBookStatus").textContent = "Snapshot · " + new Date().toLocaleTimeString("en-US");
   } catch {
-    document.getElementById("orderBookStatus").textContent = orderBookData ? "Dados desatualizados" : "Indisponível";
-    if (!orderBookData) document.getElementById("orderBook").textContent = "Não foi possível carregar as ofertas.";
+    document.getElementById("orderBookStatus").textContent = orderBookData ? "Outdated data" : "Unavailable";
+    if (!orderBookData) document.getElementById("orderBook").textContent = "Unable to load the order book.";
   } finally { orderBookBusy = false; }
 }
 function renderOrderBook() {
@@ -529,7 +529,7 @@ function renderOrderBook() {
   const { asks, bids } = orderBookData;
   const maxV = Math.max(...asks.map(a => a.v), ...bids.map(b => b.v), 0.001);
   const rows = (items, up) => items.map(a => `<div class="ob-row"><span class="ob-p" style="color:${up ? "var(--g)" : "var(--r)"}">${fmtPrice(a.p)}</span><div class="ob-bwrap"><div class="ob-b" style="width:${a.v / maxV * 100}%;background:${up ? "var(--g)" : "var(--r)"}"></div></div><span class="ob-v">${a.v.toFixed(3)}</span></div>`).join("");
-  document.getElementById("orderBook").innerHTML = rows([...asks].reverse(), false) + `<div class="ob-mid">Spread ${fmtPrice(asks[0].p - bids[0].p)} · quantidade em BTC</div>` + rows(bids, true);
+  document.getElementById("orderBook").innerHTML = rows([...asks].reverse(), false) + `<div class="ob-mid">Spread ${fmtPrice(asks[0].p - bids[0].p)} · quantity in BTC</div>` + rows(bids, true);
 }
 
 function renderVolBars() {
@@ -557,11 +557,11 @@ function renderMovers() {
       })
       .join("");
   if (!sorted.length) {
-    document.getElementById("gainers").innerHTML = document.getElementById("losers").innerHTML = '<p class="empty-state">Aguardando cotações...</p>';
+    document.getElementById("gainers").innerHTML = document.getElementById("losers").innerHTML = '<p class="empty-state">Waiting for prices...</p>';
     return;
   }
-  replaceWidget("gainers", mk(sorted.filter(x => x.d.pct > 0).slice(0, 3)) || '<p class="empty-state">Nenhuma moeda em alta.</p>');
-  replaceWidget("losers", mk(sorted.filter(x => x.d.pct < 0).slice(-3).reverse()) || '<p class="empty-state">Nenhuma moeda em baixa.</p>');
+  replaceWidget("gainers", mk(sorted.filter(x => x.d.pct > 0).slice(0, 3)) || '<p class="empty-state">No coins with gains.</p>');
+  replaceWidget("losers", mk(sorted.filter(x => x.d.pct < 0).slice(-3).reverse()) || '<p class="empty-state">No coins with losses.</p>');
 }
 
 function sortBy(col) {
@@ -649,7 +649,7 @@ function renderTable() {
   const fragment = document.createDocumentFragment();
   if (!rows.length) {
     if (focusSymbol) document.getElementById("searchInput").focus({ preventScroll: true });
-    const message = !Object.keys(liveData).length ? "Aguardando cotações..." : currentTab === 3 || favsOnly ? "Nenhum favorito nesta seleção. Use a estrela ao lado de uma moeda." : "Nenhuma moeda encontrada nesta seleção.";
+    const message = !Object.keys(liveData).length ? "Waiting for prices..." : currentTab === 3 || favsOnly ? "No favorites in this selection. Use the star next to a coin." : "No coins found in this selection.";
     tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${message}</td></tr>`;
     return;
   }
@@ -671,7 +671,7 @@ function renderTable() {
     const tr = previousRows.get(coin.s) || document.createElement("tr");
     tr.dataset.sym = coin.s;
     tr.innerHTML = `<td><span class="rank">${idx + 1}</span></td>
-<td><div class="crow"><button type="button" class="row-fav" aria-label="${favs.has(coin.s) ? "Remover dos favoritos:" : "Favoritar"} ${coin.n}" aria-pressed="${favs.has(coin.s)}" data-fav="${coin.s}">${favs.has(coin.s) ? "★" : "☆"}</button><div class="cico" style="background:${coin.bg};color:${coin.c}">${coin.i}</div><button type="button" class="coin-open" data-open="${coin.s}"><span class="cname">${coin.n}</span><span class="csym">${coin.t}</span></button></div></td>
+<td><div class="crow"><button type="button" class="row-fav" aria-label="${favs.has(coin.s) ? "Remove from favorites:" : "Favorite"} ${coin.n}" aria-pressed="${favs.has(coin.s)}" data-fav="${coin.s}">${favs.has(coin.s) ? "★" : "☆"}</button><div class="cico" style="background:${coin.bg};color:${coin.c}">${coin.i}</div><button type="button" class="coin-open" data-open="${coin.s}"><span class="cname">${coin.n}</span><span class="csym">${coin.t}</span></button></div></td>
 <td class="r"><div class="ptd">${fmtPrice(d.price)}</div><div class="ptd-sub">${altPrice}</div></td>
 <td class="r"><span class="chg ${isUp ? "up" : "dn"}">${isUp ? "+" : ""}${d.pct.toFixed(2)}%</span></td>
 <td class="r"><span class="vl">${fmtV(d.vol)}</span></td>
@@ -732,10 +732,10 @@ function updateModal(sym) {
   if (!d) return;
   const isUp = d.pct >= 0;
   document.getElementById("modalStats").innerHTML = `
-    <div class="ms"><div class="ms-l">Preço USDT</div><div class="ms-v">${fmtUSDT(d.price)}</div><div class="ms-sub" style="color:var(--y)">${fmtBRL(d.price, brlRate)}</div></div>
+    <div class="ms"><div class="ms-l">USDT price</div><div class="ms-v">${fmtUSDT(d.price)}</div><div class="ms-sub" style="color:var(--y)">${fmtBRL(d.price, brlRate)}</div></div>
     <div class="ms"><div class="ms-l">24h %</div><div class="ms-v" style="color:${isUp ? "var(--g)" : "var(--r)"}">${isUp ? "+" : ""}${d.pct.toFixed(2)}%</div></div>
-    <div class="ms"><div class="ms-l">Máxima 24h</div><div class="ms-v" style="color:var(--g)">${fmtUSDT(d.high)}</div></div>
-    <div class="ms"><div class="ms-l">Mínima 24h</div><div class="ms-v" style="color:var(--r)">${fmtUSDT(d.low)}</div></div>`;
+    <div class="ms"><div class="ms-l">24h high</div><div class="ms-v" style="color:var(--g)">${fmtUSDT(d.high)}</div></div>
+    <div class="ms"><div class="ms-l">24h low</div><div class="ms-v" style="color:var(--r)">${fmtUSDT(d.low)}</div></div>`;
   calcConvert();
 }
 
@@ -749,7 +749,7 @@ function calcConvert() {
   const valid = Number.isFinite(qty) && Number.isFinite(qty * d.price) && (!Number.isFinite(brlRate) || Number.isFinite(qty * d.price * brlRate)) && qty >= 0 && input.value !== "";
   input.setAttribute("aria-invalid", !valid);
   if (!valid) {
-    document.getElementById("calcResultUSDT").textContent = "Quantidade inválida";
+    document.getElementById("calcResultUSDT").textContent = "Invalid quantity";
     document.getElementById("calcResultBRL").textContent = "—";
     return;
   }
@@ -762,8 +762,8 @@ function calcConvert() {
       maximumFractionDigits: 4,
     });
   document.getElementById("calcResultBRL").textContent =
-    brl === null ? "Indisponível" : "R$" +
-    brl.toLocaleString("pt-BR", {
+    brl === null ? "Unavailable" : "R$" +
+    brl.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -774,7 +774,7 @@ async function loadKlines(interval, range, btnEl) {
   chartController = new AbortController();
   const requestID = ++chartRequest;
   if (modalChartInst) { modalChartInst.destroy(); modalChartInst = null; }
-  document.getElementById("chartStatus").textContent = "Carregando histórico...";
+  document.getElementById("chartStatus").textContent = "Loading history...";
   if (btnEl) {
     document
       .querySelectorAll(".tf-btn")
@@ -796,11 +796,11 @@ async function loadKlines(interval, range, btnEl) {
     if (requestID !== chartRequest || currentModal !== sym) return;
     const labels = raw.data.map(k => {
       const dt = new Date(k.time);
-      return interval === "1d" ? dt.toLocaleDateString("pt-BR", { month: "short", day: "numeric" }) : dt.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      return interval === "1d" ? dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : dt.toLocaleString("en-US", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
     });
     const closes = raw.data.map(k => k.close);
     document.getElementById("chartStatus").textContent = "";
-    if (typeof Chart === "undefined") throw new Error("Biblioteca de gráficos indisponível.");
+    if (typeof Chart === "undefined") throw new Error("Chart library is unavailable.");
     const isUp = closes[closes.length - 1] >= closes[0];
     if (modalChartInst) {
       modalChartInst.destroy();
@@ -866,7 +866,7 @@ async function loadKlines(interval, range, btnEl) {
     document.getElementById("modalChartLabel").textContent =
       `${coin.t}/USDT · ${range.toUpperCase()} · ${interval.toUpperCase()}`;
   } catch (error) {
-    if (requestID === chartRequest && currentModal === sym) document.getElementById("chartStatus").textContent = "Histórico indisponível. Selecione um período para tentar novamente.";
+    if (requestID === chartRequest && currentModal === sym) document.getElementById("chartStatus").textContent = "History is unavailable. Select a time range to try again.";
   }
 }
 
@@ -897,8 +897,8 @@ document.getElementById("retryBtn").addEventListener("click", () => { reconnectA
 window.addEventListener("offline", () => {
   clearTimeout(wsReconnectTimer);
   if (ws) { ws.onclose = null; ws.close(); }
-  setWsStatus("offline", "Sem conexão");
-  announce("Sem internet. Os dados exibidos podem estar desatualizados.");
+  setWsStatus("offline", "Offline");
+  announce("You are offline. Displayed data may be outdated.");
 });
 window.addEventListener("online", () => { reconnectAttempt = 0; connectWS(); fetchInitial(); fetchBRL(); fetchOrderBook(); });
 document.addEventListener("visibilitychange", () => {
@@ -926,8 +926,8 @@ setInterval(() => { if (!stopped) fetchOrderBook(); }, 15000);
 setInterval(() => {
   if (stopped || document.hidden || !navigator.onLine) return;
   if (ws && ws.readyState < 2 && Date.now() - lastMessageTime > 20000) {
-    setWsStatus("stale", "Dados desatualizados");
-    announce("O fluxo parou de atualizar. Tentando restabelecer a conexão.");
+    setWsStatus("stale", "Outdated data");
+    announce("The stream stopped updating. Trying to reconnect.");
     connectWS();
   }
   if (connectionState !== "live") fetchInitial();
