@@ -173,9 +173,20 @@ const server = http.createServer((req, res) => {
     console.log('Screenshots: /tmp/cryptowatch-desktop.png and /tmp/cryptowatch-mobile.png');
   } finally {
     socket?.close();
-    if (chrome) { chrome.kill('SIGTERM'); await new Promise(resolve => { chrome.once('exit', resolve); setTimeout(resolve, 1000); }); }
+    if (chrome?.pid && chrome.exitCode === null && chrome.signalCode === null) {
+      // Wait for shutdown instead of deleting a profile Chromium is still using.
+      const closed = new Promise(resolve => chrome.once('close', resolve));
+      const forceKill = setTimeout(() => chrome.kill('SIGKILL'), 5000);
+      try {
+        chrome.kill('SIGTERM');
+        await closed;
+      } finally {
+        clearTimeout(forceKill);
+      }
+    }
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
-    fs.rmSync(profile, { recursive: true, force: true });
+    // Child processes can finish writing shortly after the main process exits.
+    await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 })().catch(error => { console.error(error); process.exitCode = 1; });
