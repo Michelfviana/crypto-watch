@@ -1,6 +1,22 @@
-<link rel="stylesheet" href="style.css" />
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#040710">
+  <meta name="description" content="Acompanhe criptomoedas em tempo real, favoritos, histórico e ofertas da Binance em USDT e reais.">
+  <title>CryptoWatch · Mercado cripto ao vivo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23040710'/%3E%3Ctext x='6' y='24' fill='%2300ffb2' font-size='24'%3E₿%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip-link" href="#market">Ir para as cotações</a>
+<noscript><p class="notice">Ative o JavaScript para acompanhar as cotações em tempo real.</p></noscript>
 
-<h2
+
+<h1
   style="
     position: absolute;
     width: 1px;
@@ -9,11 +25,11 @@
     clip: rect(0, 0, 0, 0);
   "
 >
-  Real-time Crypto Dashboard Binance WebSocket
-</h2>
+  Mercado de criptomoedas em tempo real
+</h1>
 
 <div id="app">
-  <div class="topbar">
+  <header class="topbar">
     <div class="logo">
       <svg viewBox="0 0 32 32" fill="none">
         <path
@@ -30,27 +46,27 @@
       </svg>
       <div>
         <div class="logo-name">CryptoWatch</div>
-        <div class="logo-tag">BINANCE WEBSOCKET · REAL-TIME</div>
+        <div class="logo-tag">BINANCE · MERCADO EM TEMPO REAL</div>
       </div>
     </div>
     <div class="topbar-r">
-      <div class="brl-rate" id="brlRate">USD/BRL —</div>
+      <div class="brl-rate" id="brlRate">USDT/BRL —</div>
       <div class="currency-toggle">
-        <button class="cur-btn active" id="btnUSD" onclick="setCurrency('USD')">
-          USD
+        <button class="cur-btn active" id="btnUSDT" onclick="setCurrency('USDT')">
+          USDT
         </button>
         <button class="cur-btn" id="btnBRL" onclick="setCurrency('BRL')">
           BRL
         </button>
       </div>
-      <div class="pill p-ws" id="wsPill">
-        <span class="blink" id="wsDot"></span
-        ><span id="wsLabel">Connecting...</span>
+      <div class="pill p-ws" id="wsPill" role="status" aria-label="Status da conexão com a Binance" aria-live="polite">
+        <span class="blink" id="wsDot" aria-hidden="true"></span>
+        <span id="wsLabel">Conectando...</span>
       </div>
-      <div class="pill p-live"><span class="blink blink-g"></span>LIVE</div>
     </div>
-  </div>
+  </header>
 
+  <div class="notice-row"><p id="notice" role="status" aria-live="polite"></p><button type="button" id="retryBtn">Reconectar</button></div>
   <div class="mq-wrap">
     <div class="mq-inner" id="mqInner">
       <span
@@ -60,14 +76,14 @@
           font-family: &quot;Space Mono&quot;, monospace;
           font-size: 9px;
         "
-        >Waiting for stream...</span
+        >Aguardando cotações...</span
       >
     </div>
   </div>
 
   <div class="hero" id="heroGrid"></div>
 
-  <div class="main">
+  <main class="main" id="market" tabindex="-1">
     <div class="left">
       <div class="search-row">
         <div class="search-wrap">
@@ -75,20 +91,22 @@
           <input
             type="text"
             id="searchInput"
-            placeholder="Search coin..."
+            aria-label="Buscar por nome ou símbolo da moeda"
+            autocomplete="off"
+            placeholder="Buscar moeda..."
             oninput="renderTable()"
           />
         </div>
-        <button class="fav-toggle" id="favBtn" onclick="toggleFavsOnly()">
-          ☆ Favorites
+        <button class="fav-toggle" aria-pressed="false" id="favBtn" onclick="toggleFavsOnly()">
+          ☆ Favoritos
         </button>
       </div>
       <div class="tabs-bar">
         <div class="tabs">
-          <button class="tab active" onclick="setTab(0, this)">All</button>
-          <button class="tab" onclick="setTab(1, this)">Gainers</button>
-          <button class="tab" onclick="setTab(2, this)">Losers</button>
-          <button class="tab" onclick="setTab(3, this)">Favorites</button>
+          <button class="tab active" aria-pressed="true" onclick="setTab(0, this)">Todas</button>
+          <button class="tab" aria-pressed="false" onclick="setTab(1, this)">Altas</button>
+          <button class="tab" aria-pressed="false" onclick="setTab(2, this)">Baixas</button>
+          <button class="tab" aria-pressed="false" onclick="setTab(3, this)">Favoritos</button>
         </div>
         <div class="ws-status">
           <div class="ws-dot" id="wsStatusDot"></div>
@@ -98,16 +116,16 @@
       </div>
 
       <div class="tcard">
-        <table>
+        <table aria-label="Cotações de criptomoedas nas últimas 24 horas">
           <thead>
             <tr>
               <th>#</th>
-              <th>Coin</th>
-              <th class="r" onclick="sortBy('price')" id="th-price">Price ↕</th>
+              <th>Moeda</th>
+              <th class="r" onclick="sortBy('price')" id="th-price">Preço ↕</th>
               <th class="r" onclick="sortBy('pct')" id="th-pct">24h % ↕</th>
-              <th class="r" onclick="sortBy('vol')" id="th-vol">Volume ↕</th>
-              <th class="r" onclick="sortBy('hl')" id="th-hl">H / L</th>
-              <th class="r">Candles</th>
+              <th class="r" onclick="sortBy('vol')" id="th-vol">Volume (USDT) ↕</th>
+              <th class="r" onclick="sortBy('hl')" id="th-hl">Máx. / Mín.</th>
+              <th class="r">Tendência</th>
             </tr>
           </thead>
           <tbody id="tableBody">
@@ -122,7 +140,7 @@
                   font-size: 10px;
                 "
               >
-                Waiting for WebSocket...
+                Aguardando cotações...
               </td>
             </tr>
           </tbody>
@@ -140,13 +158,13 @@
             margin-bottom: 7px;
           "
         >
-          24h Change
+          Variação em 24h
         </div>
         <div style="position: relative; height: 95px">
           <canvas
             id="barChart"
             role="img"
-            aria-label="24h Change All Coins"
+            aria-label="Variação de todas as moedas em 24 horas"
           ></canvas>
         </div>
       </div>
@@ -155,58 +173,59 @@
     <div class="side">
       <div class="sc">
         <div class="sc-hdr">
-          <span class="sc-title">Fear &amp; Greed</span>
+          <span class="sc-title">Moedas em alta · 24h</span>
         </div>
-        <div class="fear-body">
-          <div style="display: flex; align-items: flex-end; gap: 9px">
-            <div class="fear-num" id="fearNum">—</div>
-            <div>
-              <div class="fear-lbl" id="fearLbl" style="color: #555">—</div>
-              <div class="fear-hint">0 fear · 100 greed</div>
-            </div>
+        <div class="breadth-body">
+          <div class="breadth-heading">
+            <div class="breadth-num" id="breadthNum">—</div>
+            <div class="breadth-lbl" id="breadthLbl">—</div>
           </div>
-          <div class="fear-track">
-            <div class="fear-fill" id="fearFill" style="width: 0%"></div>
+          <p class="breadth-hint">Conta moedas acima de 0% nas últimas 24h. Só muda ao cruzar 0%.</p>
+          <div class="breadth-track" id="breadthProgress" role="progressbar" aria-label="Percentual de moedas com variação positiva em 24 horas" aria-valuemin="0" aria-valuemax="100">
+            <div class="breadth-fill" id="breadthFill" style="width: 0%"></div>
           </div>
-          <div class="fear-ticks">
-            <span class="fear-tick">Fear</span
-            ><span class="fear-tick">Neutral</span
-            ><span class="fear-tick">Greed</span>
+          <div class="breadth-ticks">
+            <span class="breadth-tick">0%</span
+            ><span class="breadth-tick">50%</span
+            ><span class="breadth-tick">100%</span>
           </div>
+          <p class="breadth-summary" id="breadthSummary"></p>
+          <p class="breadth-status" id="breadthStatus">Aguardando cotações...</p>
         </div>
       </div>
       <div class="sc">
-        <div class="sc-hdr"><span class="sc-title">Heatmap 24h</span></div>
+        <div class="sc-hdr"><span class="sc-title">Mapa de calor · 24h</span></div>
         <div class="heatmap" id="heatmap"></div>
       </div>
       <div class="sc">
-        <div class="sc-hdr"><span class="sc-title">Order Book BTC</span></div>
+        <div class="sc-hdr"><span class="sc-title">Ofertas BTC/USDT</span><span id="orderBookStatus">Carregando...</span></div>
         <div class="ob-body" id="orderBook"></div>
       </div>
       <div class="sc">
-        <div class="sc-hdr"><span class="sc-title">24h Volume</span></div>
+        <div class="sc-hdr"><span class="sc-title">Volume em USDT · 24h</span></div>
         <div style="padding: 8px 0 4px" id="volBars"></div>
       </div>
       <div class="sc">
-        <div class="sc-hdr"><span class="sc-title">Top Gainers</span></div>
+        <div class="sc-hdr"><span class="sc-title">Maiores altas</span></div>
         <div id="gainers"></div>
       </div>
       <div class="sc">
-        <div class="sc-hdr"><span class="sc-title">Top Losers</span></div>
+        <div class="sc-hdr"><span class="sc-title">Maiores baixas</span></div>
         <div id="losers"></div>
       </div>
     </div>
-  </div>
+  </main>
 
-  <div class="footer">
+  <footer class="footer">
     <div style="display: flex; align-items: center; gap: 5px">
       <span class="cdot"></span
-      ><span id="connTxt">Binance WebSocket Stream</span>
+      ><span id="connTxt">Binance · conectando...</span>
     </div>
     <span id="footerTs">—</span>
-  </div>
+  </footer>
+  <p class="data-note">Preços em USDT (₮), sem equivalência garantida com USD. Conversão em reais pelo par USDT/BRL. Minigráficos mostram as últimas atualizações recebidas nesta sessão.</p>
 
-  <div class="modal-overlay" id="modalOverlay" style="display: none">
+  <dialog class="modal-overlay" id="modalOverlay" aria-labelledby="modalTitle">
     <div class="modal">
       <div class="modal-hdr">
         <div
@@ -214,59 +233,62 @@
           style="display: flex; align-items: center; gap: 10px"
         ></div>
         <div style="display: flex; align-items: center; gap: 7px">
-          <div
+          <button type="button" aria-label="Favoritar moeda" aria-pressed="false"
             id="modalFavBtn"
             style="cursor: pointer; font-size: 15px; color: var(--t3)"
             onclick="toggleFav(currentModal)"
           >
             ☆
-          </div>
-          <button class="modal-close" onclick="closeModal()">✕</button>
+          </button>
+          <button type="button" aria-label="Fechar detalhes" class="modal-close" onclick="closeModal()">✕</button>
         </div>
       </div>
       <div class="modal-stats" id="modalStats"></div>
       <div class="modal-chart-wrap">
         <div class="modal-chart-hdr">
           <span class="modal-chart-label" id="modalChartLabel"
-            >Price History</span
+            >Histórico em USDT</span
           >
           <div class="tf-btns">
             <button
               class="tf-btn active"
               onclick="loadKlines('1h', '1d', this)"
             >
-              1D
+              1 dia
             </button>
             <button class="tf-btn" onclick="loadKlines('4h', '7d', this)">
-              7D
+              7 dias
             </button>
             <button class="tf-btn" onclick="loadKlines('1d', '30d', this)">
-              30D
+              30 dias
             </button>
           </div>
         </div>
+        <p id="chartStatus" role="status" class="chart-status"></p>
         <div style="position: relative; height: 155px">
           <canvas
             id="modalChart"
             role="img"
-            aria-label="Price History Chart"
+            aria-label="Histórico em USDT Chart"
           ></canvas>
         </div>
       </div>
       <div class="modal-calc">
-        <div class="calc-title">Calculator</div>
+        <div class="calc-title">Conversor</div>
         <div class="calc-row">
           <input
             class="calc-input"
             type="number"
             id="calcInput"
+            aria-label="Quantidade de moedas"
+            min="0" step="any" inputmode="decimal"
             placeholder="1"
             value="1"
             oninput="calcConvert()"
           />
           <span class="calc-sym" id="calcSym">BTC =</span>
-          <div class="calc-result" id="calcResultUSD">—</div>
-          <span class="calc-sym">USD</span>
+          <div class="calc-result" id="calcResultUSDT">—</div>
+          <span class="calc-sym">USDT</span>
         </div>
         <div class="calc-row" style="margin-top: 5px">
           <div style="width: 95px"></div>
@@ -282,8 +304,12 @@
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="script.js"></script>
+<script defer src="vendor/chart.umd.js"></script>
+<script defer src="api.js"></script>
+<script defer src="preferences.js"></script>
+<script defer src="script.js"></script>
+</body>
+</html>

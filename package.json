@@ -1,0 +1,12 @@
+{
+  "name": "crypto-watch",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Dashboard estático de criptomoedas com dados públicos da Binance",
+  "scripts": {
+    "test": "node --test tests/api.test.cjs",
+    "test:browser": "node tests/browser.cjs",
+    "check": "node --check api.js && node --check preferences.js && node --check script.js"
+  },
+  "engines": { "node": ">=22" }
+}
