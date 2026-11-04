@@ -40,11 +40,26 @@ const server = http.createServer((req, res) => {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'cryptowatch-test-'));
   try {
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-    chrome = spawn(process.env.CHROME_BIN || 'chromium', ['--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+    const chromePath = process.env.CHROME_BIN || 'chromium';
+    let chromeStderr = '';
+    chrome = spawn(chromePath, ['--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
+    chrome.stderr.setEncoding('utf8');
+    chrome.stderr.on('data', chunk => { chromeStderr = (chromeStderr + chunk).slice(-4000); });
+    const chromeError = new Promise(resolve => chrome.once('error', resolve));
     const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     let port;
-    for (let i = 0; i < 100; i++) { try { port = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]; break; } catch { await pause(100); } }
-    assert.ok(port, 'Chromium debugging port is available');
+    for (let i = 0; i < 200; i++) {
+      try { port = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]; break; }
+      catch {
+        if (chrome.exitCode !== null || chrome.signalCode !== null) break;
+        const launchError = await Promise.race([chromeError, pause(100).then(() => null)]);
+        if (launchError) break;
+      }
+    }
+    if (!port) {
+      const details = chromeStderr.trim();
+      throw new Error(`Chromium did not expose its debugging port (executable: ${chromePath}, exit code: ${chrome.exitCode}, signal: ${chrome.signalCode})${details ? `\n${details}` : ''}`);
+    }
     const pages = await fetch(`http://127.0.0.1:${port}/json/list`).then(r => r.json());
     socket = new WebSocket(pages.find(p => p.type === 'page').webSocketDebuggerUrl);
     await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject; });
