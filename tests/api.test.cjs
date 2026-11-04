@@ -3,10 +3,12 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const http = require('node:http');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
 
 function load(fetcher = fetch, timers = { setTimeout, clearTimeout }) {
   const context = vm.createContext({ fetch: fetcher, URLSearchParams, AbortController, Date, ...timers });
-  vm.runInContext(fs.readFileSync('api.js', 'utf8') + '\nglobalThis.api = CryptoAPI;', context);
+  vm.runInContext(fs.readFileSync(path.join(root, 'js/api.js'), 'utf8') + '\nglobalThis.api = CryptoAPI;', context);
   return context.api;
 }
 const ticker = { symbol: 'BTCUSDT', lastPrice: '68000', priceChangePercent: '2.5', quoteVolume: '1000000', highPrice: '69000', lowPrice: '65000', priceChange: '1600' };
@@ -68,7 +70,7 @@ test('real HTTP request cancellation and timeout propagate to the caller', async
 test('preferences recover from corrupt data and blocked storage', () => {
   for (const saved of ['null', '{broken', '42']) {
     const context = vm.createContext({ localStorage: { getItem: () => saved, setItem() { throw new Error('disabled'); } } });
-    vm.runInContext(fs.readFileSync('preferences.js', 'utf8') + '\nglobalThis.prefs = Preferences;', context);
+    vm.runInContext(fs.readFileSync(path.join(root, 'js/preferences.js'), 'utf8') + '\nglobalThis.prefs = Preferences;', context);
     assert.equal(Object.keys(context.prefs.read()).length, 0);
     assert.doesNotThrow(() => context.prefs.write({ favs: ['BTCUSDT'] }));
   }

@@ -4,7 +4,7 @@ A cryptocurrency dashboard built with HTML, CSS, and JavaScript. No framework, b
 
 **Demo:** [michelfviana.github.io/crypto-watch](https://michelfviana.github.io/crypto-watch/)
 
-![CryptoWatch](image.png)
+![CryptoWatch](assets/images/cryptowatch.png)
 
 > The screenshot shows the original version. The live demo is updated through the repository's deployment workflow.
 
@@ -41,12 +41,15 @@ Chart.js 4.4.1 is included in `vendor/` with its MIT license. Fonts are loaded f
 | File | Responsibility |
 | --- | --- |
 | `index.html` | Page structure, controls, and details dialog |
-| `style.css` | Theme, responsive layouts, and reduced motion |
-| `api.js` | Data access, timeouts, validation, and HTTP rate limits |
-| `preferences.js` | Local preferences and storage failure recovery |
-| `script.js` | State, connection management, rendering, and interactions |
+| `css/style.css` | Theme, responsive layouts, and reduced motion |
+| `js/api.js` | Data access, timeouts, validation, and HTTP rate limits |
+| `js/preferences.js` | Local preferences and storage failure recovery |
+| `js/script.js` | State, connection management, rendering, and interactions |
+| `assets/images/` | Project screenshots and image assets |
+| `vendor/` | Third-party browser libraries and their licenses |
 | `tests/` | HTTP integration, validation, and Chromium interaction checks |
-| `docs/data-contract.md` | Data sources, contracts, and limitations |
+| `docs/` | Data sources, contracts, and limitations |
+| `.github/workflows/` | Automated repository checks |
 
 ## Verification
 
@@ -79,6 +82,6 @@ Browser checks run the actual app and bundled Chart.js against a local HTTP API 
 
 ## Deployment
 
-Publish `index.html`, `style.css`, `api.js`, `preferences.js`, `script.js`, and `vendor/` together on a static host such as GitHub Pages. No build step or production credentials are needed.
+Publish `index.html`, `css/`, `js/`, and `vendor/` together on a static host such as GitHub Pages. No build step or production credentials are needed.
 
 An educational market-tracking project.

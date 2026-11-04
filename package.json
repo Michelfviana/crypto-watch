@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node --test tests/api.test.cjs",
     "test:browser": "node tests/browser.cjs",
-    "check": "node --check api.js && node --check preferences.js && node --check script.js"
+    "check": "node --check js/api.js && node --check js/preferences.js && node --check js/script.js"
   },
   "engines": { "node": ">=22" }
 }

@@ -763,10 +763,10 @@ function calcConvert() {
     });
   document.getElementById("calcResultBRL").textContent =
     brl === null ? "Unavailable" : "R$" +
-    brl.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+      brl.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 }
 
 async function loadKlines(interval, range, btnEl) {

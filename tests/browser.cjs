@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
   const file = path.resolve(root, '.' + (url.pathname === '/' ? '/index.html' : url.pathname));
   if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end(); }
   let body = fs.readFileSync(file);
-  if (url.pathname === '/api.js') body = body.toString().replace('https://data-api.binance.vision/api/v3', `http://127.0.0.1:${server.address().port}/api/v3`);
+  if (url.pathname === '/js/api.js') body = body.toString().replace('https://data-api.binance.vision/api/v3', `http://127.0.0.1:${server.address().port}/api/v3`);
   res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html');
   res.end(body);
 });
